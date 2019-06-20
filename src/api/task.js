@@ -9,17 +9,25 @@ export function getUser(params) {
   })
 }
 
-export function addTask(params) {
+export function createUser(params) {
   return request({
-    url: '/importvoice/items',
+    url: '/user/register',
     method: 'POST',
     params
   })
 }
 
-export function delTask(id) {
+export function resetUser(params) {
   return request({
-    url: `${url}/${id}`,
+    url: '/user/resetPwd',
+    method: 'PUT',
+    params
+  })
+}
+
+export function deleteUser(id) {
+  return request({
+    url: `/user/deleteById/${id}`,
     method: 'DELETE'
   })
 }

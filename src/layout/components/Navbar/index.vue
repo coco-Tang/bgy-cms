@@ -7,7 +7,7 @@
     <div class="right-menu">
       <section class="avatar-container">
         <i class="iconfont">&#xe6cd;</i>
-        <span class="avatar-name">管理员小王</span>
+        <span class="avatar-name">管理员{{ account }}</span>
       </section>
       <section class="logout" @click="logout">
         <i class="iconfont">&#xe6cc;</i>
@@ -30,7 +30,7 @@ export default {
     headernav
   },
   computed: {
-    ...mapGetters(["name", "avatar", "device"])
+    ...mapGetters(["account", "avatar", "device"])
   },
   created() {
     

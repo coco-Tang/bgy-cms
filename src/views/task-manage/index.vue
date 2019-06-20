@@ -33,7 +33,7 @@
         </div>
       </div>
       <div class="right-menu">
-        <div class="user-create" @click="dialogFormVisible = true">
+        <div class="user-create" @click="createUserdialog = true">
           <i class="iconfont">&#xe68a;</i>
           <span>创建用户</span>
         </div>
@@ -43,16 +43,16 @@
     <div class="user-table">
       <el-table :data="tableData" stripe style="width: 100%">
         <el-table-column type="index" width="50" label="序号"></el-table-column>
-        <el-table-column prop="date" label="账号" width="180"></el-table-column>
+        <el-table-column prop="account" label="账号" width="180"></el-table-column>
         <el-table-column prop="name" label="创建时间" width="180"></el-table-column>
         <el-table-column label="操作">
           <template slot-scope="scope">
-            <el-button size="mini" @click="handleEdit(scope.$index, scope.row)" type="text">密码重置</el-button>
+            <el-button size="mini" @click="pwdReset(scope.row.id)" type="text">密码重置</el-button>
             <span style="color:#666;">&nbsp;&nbsp;|&nbsp;&nbsp;</span>
             <el-button
               size="mini"
               type="text"
-              @click="handleDelete(scope.$index, scope.row)"
+              @click="handleDelete(scope.row.id)"
               style="color:#F56C6C;"
             >删除</el-button>
           </template>
@@ -65,55 +65,129 @@
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
         :current-page.sync="currentPage"
-        :page-size="100"
+        :page-size="pageSize"
         layout="prev, pager, next, jumper"
-        :total="1000"
+        :total="totalPage"
+        :background="true"
       ></el-pagination>
     </div>
 
-    <el-dialog title="创建用户" :visible.sync="dialogFormVisible" center="">
-      <el-form :model="form">
+    <!-- <base-dialog :show="dialog_show" @close="dialog_close" @submit="dialog_submit" title="创建用户">
+    <el-form :model="createUserform" ref="createUser">
         <el-form-item label="账号" :label-width="formLabelWidth">
-          <el-input v-model="form.account"></el-input>
+          <el-input v-model="createUserform.account"></el-input>
         </el-form-item>
         <el-form-item label="密码" :label-width="formLabelWidth">
-          <el-input v-model="form.password"></el-input>
+          <el-input v-model="createUserform.password"></el-input>
         </el-form-item>
         <el-form-item label="确认密码" :label-width="formLabelWidth">
-          <el-input v-model="form.passwordCheck"></el-input>
+          <el-input v-model="createUserform.passwordCheck"></el-input>
         </el-form-item>
         <el-form-item label="角色" :label-width="formLabelWidth">
-          <el-radio-group v-model="form.role">
+          <el-radio-group v-model="createUserform.role">
+            <el-radio :label="1">系统管理员</el-radio>
+            <el-radio :label="2">客服</el-radio>
+          </el-radio-group>
+        </el-form-item>
+      </el-form>
+    </base-dialog> -->
+
+    <el-dialog title="创建用户" :visible.sync="createUserdialog" center="">
+      <el-form :model="createUserform" ref="createUser" :rules="createUserformRules">
+        <el-form-item label="账号"  prop="account" :label-width="formLabelWidth">
+          <el-input v-model="createUserform.account"></el-input>
+        </el-form-item>
+        <el-form-item label="密码"  prop="password" :label-width="formLabelWidth">
+          <el-input v-model="createUserform.password" type="password"></el-input>
+        </el-form-item>
+        <el-form-item label="确认密码"  prop="passwordCheck" :label-width="formLabelWidth">
+          <el-input v-model="createUserform.passwordCheck" type="password"></el-input>
+        </el-form-item>
+        <el-form-item label="角色"  prop="role" :label-width="formLabelWidth">
+          <el-radio-group v-model="createUserform.role">
             <el-radio :label="1">系统管理员</el-radio>
             <el-radio :label="2">客服</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button @click="dialogFormVisible = false">取 消</el-button>
-        <el-button type="primary" @click="dialogFormSubmit">创建</el-button>
+        <el-button @click="createUserformClose">取 消</el-button>
+        <el-button type="primary" @click="createUserSubmit">创建</el-button>
+      </div>
+    </el-dialog>
+
+    <el-dialog title="密码重置" :visible.sync="pwdResetdialog" center="">
+      <el-form :model="pwdResetform" ref="pwdReset">
+        <el-form-item>
+          <el-input v-model="pwdResetform.password" placeholder="新密码（6-20位字符，包含数字、字母）"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="pwdResetformClose">取 消</el-button>
+        <el-button type="primary" @click="pwdResetSubmit">重置</el-button>
       </div>
     </el-dialog>
   </div>
 </template>
 
 <script>
-import { AgGridVue } from "ag-grid-vue";
+// import BaseDialog from "../../components/BaseDialog";
 import { mapActions, mapGetters } from "vuex";
-import {getUser,createUsers,updateUsers,deleteUsers,resetUsers} from '@/api/task.js'
-// import localeText from '../../static/localeText.json'
-import axios from "axios";
-import userDialog from "@/components/userDialog.vue";
+import {
+  getUser,
+  createUser,
+  // updateUsers,
+  deleteUser,
+  resetUser
+} from "@/api/task.js";
+import { Message, MessageBox } from "element-ui";
 export default {
   name: "userManagement",
-  components: {
-    "ag-grid-vue": AgGridVue,
-    "user-dialog": userDialog
-    // 'auth-dialog': authDialog,
-    // 'department-dialog': departmentDialog,
-    // 'sectionoffice-dialog': sectionofficeDialog,
-  },
   data() {
+    const validatePass = (rule, value, callback) => {
+      if (!value) {
+        return callback(new Error("密码不能为空！"));
+      }
+      const reg = /^[a-zA-Z0-9]{6,12}$/;
+      if (!reg.test(value)) {
+        return callback(new Error("6到12位（字母，数字）！"));
+      }
+      if (this.createUserform.passwordCheck !== "") {
+          // 对第二个密码框单独验证
+          this.$refs.createUser.validateField("passwordCheck");
+        }
+      // if (!value) {
+      //   return callback(new Error("密码不能为空！"));
+      //   const reg = /^[a-zA-Z0-9]{6,12}$/;
+      //   if (!reg.test(value)) {
+      //     console.log('不满6位')
+      //     return callback(new Error("6到12位（字母，数字）！"));
+      //   }
+      //   if (this.createUserform.passwordCheck !== "") {
+      //     // 对第二个密码框单独验证
+      //     this.$refs.createUser.validateField("passwordCheck");
+      //   }
+      //   // callback();
+      // }
+    };
+    const validatePassCheck = (rule, value, callback) => {
+      if (value === "") {
+        callback(new Error("请再次输入您的密码！"));
+      } else if (value !== this.createUserform.password) {
+        callback(new Error("两次输入密码不一致!"));
+      } else {
+        callback();
+      }
+    };
+    const validateAccount = (rule, value, callback) => {
+      if (!value) {
+        return callback(new Error("账号不能为空！"));
+      }
+      const reg = /^[\u4e00-\u9fa5a-zA-Z0-9_-]{4,10}$/;
+      if (!reg.test(value)) {
+        return callback(new Error("4到10位（中文，字母，数字，下划线，减号）！"));
+      }
+    };
     return {
       pickerOptions: {
         disabledDate(time) {
@@ -169,68 +243,125 @@ export default {
       ],
       currentPage: 1,
       pageSize: 10,
-      dialogFormVisible: false,
-      form: {
+      createUserdialog: false,
+      createUserform: {
         account: "",
         password: "",
         passwordCheck: "",
-        radio: 1
+        role: 1
+      },
+      createUserformRules: {
+        password: [{ validator: validatePass, trigger: "blur" }],
+        passwordCheck: [{ validator: validatePassCheck, trigger: "blur" }],
+        account: [{ validator: validateAccount, trigger: "blur" }]
+      },
+      pwdResetdialog: false,
+      pwdResetform: {
+        password: ""
       },
       formLabelWidth: "120px",
       account: ""
-
     };
   },
-
+  computed: {
+    totalPage() {
+      return this.tableData.length;
+    }
+  },
+  // components: {
+  //   BaseDialog
+  // },
   created() {
-    let params = {
-      page: this.currentPage,
-      limit: this.pageSize
-    };
-    this.getUser(params);
-    // this.localeText = localeText;
+    this.getUser();
   },
-  mounted() {
-    // this.gridOptions.api.sizeColumnsToFit()
-    // this.Utils.dateFormat();
-    // this.dataInit();
-  },
+  mounted() {},
   beforeDestroy() {},
   destroyed() {},
   methods: {
     ...mapActions(["TASK_ID", "QL_DATA", "SECTION_TREE"]),
     ...mapGetters(["getTaskId", "getSectionTree", "getAccount"]),
-    getUser(params) {
+    getUser() {
+      let params = {
+        page: this.currentPage,
+        limit: this.pageSize
+      };
       getUser(params).then(res => {
-        console.log(res.data)
+        // console.log(res.data)
+        this.tableData = res.data.filter(item => {
+          return !item.deleteFlag;
+        });
+      });
+    },
+    handleSizeChange(v) {
+      this.pageSize = v;
+      this.getUser();
+    },
+    handleCurrentChange(v) {
+      this.currentPage = v;
+      this.getUser();
+    },
+    pwdReset(id) {
+      this.pwdResetdialog = true;
+      this.id = id;
+    },
+    handleDelete(id) {
+      MessageBox.confirm("此操作将永久删除该用户, 是否继续?", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning"
       })
+        .then(() => {
+          deleteUser(id).then(res => {
+            // console.log(res)
+            if (res.code === 200) {
+              Message.success(res.message);
+              this.getUser();
+            }
+          });
+        })
+        .catch(() => {
+          Message({
+            type: "info",
+            message: "已取消删除"
+          });
+        });
     },
-    handleSizeChange(val) {
-      console.log(`每页 ${val} 条`);
+    createUserformClose() {
+      this.$refs["createUser"].resetFields();
+      this.createUserdialog = false;
     },
-    handleCurrentChange(val) {
-      console.log(`当前页: ${val}`);
+    createUserSubmit() {
+      const { account, password, role } = this.createUserform;
+      // console.log(this.form)
+      createUser({ account, password, role }).then(res => {
+        // console.log(res);
+        if (res.code === 1) {
+          Message.success(res.message);
+          this.getUser();
+          this.$refs["createUser"].resetFields();
+          this.createUserdialog = false;
+        }
+      });
     },
-    handleEdit(index, row) {
-      console.log(index, row);
+    pwdResetformClose() {
+      this.$refs["pwdReset"].resetFields();
+      this.pwdResetdialog = false;
     },
-    handleDelete(index, row) {
-      console.log(index, row);
-    },
-    dialogFormSubmit() {
-      this.dialogFormVisible = false;
+    pwdResetSubmit() {
+      const { password } = this.pwdResetform;
+      const id = this.id;
+      resetUser({ id, password }).then(res => {
+        console.log(res.data);
+        if (res.code === 200) {
+          Message.success(res.message);
+          this.pwdResetformClose();
+          // this.$router.replace({path: "/login"});
+        }
+      });
     },
     parentMethod() {
       console.log(this.gridOptions);
       this.$refs.compUser.quickRecgnizeHandle();
-    },
-    handleSizeChange(v) {
-      this.pageSize = v;
-      this.dataInit();
-    },
-    handleCurrentChange(v) {
-      this.currentPage = v;
-      this.dataInit();
     },
 
     editHandle() {
@@ -263,7 +394,7 @@ export default {
           }
         })
         .then(() => {
-          this.dataInit();
+          this.getUser();
         })
         .catch(err => {
           console.error("deleteUsers--err:", err);
@@ -292,7 +423,7 @@ export default {
           }
         })
         .then(() => {
-          this.dataInit();
+          this.getUser();
         })
         .catch(err => {
           console.error("resetUsers--err:", err);

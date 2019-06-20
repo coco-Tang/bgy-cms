@@ -36,12 +36,29 @@ module.exports = {
     proxy: {
       // change xxx-api/login => mock/login
       // detail: https://cli.vuejs.org/config/#devserver-proxy
-      "/user": {
-        target: `http://localhost:8099`,
-        changeOrigin: true,
-        pathRewrite: {
-          '^/user': ''        }
-      }
+      // "/user": {
+      //   target: `http://172.16.210.101:8080/`,
+      //   changeOrigin: true,
+      //   pathRewrite: {
+      //     '^/user': ''        }
+      // },
+      //vue-cli3改变书写形式
+      // "/login": {
+      //   target: `http://localhost:9090/`,
+      //   changeOrigin: true,
+      //   pathRewrite: {
+      //     '^/login': ''        }
+      // },
+      '^/login': {
+        target: 'http://localhost:9090/',
+        ws: true,
+        changeOrigin: true
+      },
+      '^/user': {
+        target: 'http://172.16.210.101:8080/',
+        ws: true,
+        changeOrigin: true
+      },
     },
     // after: require('./mock/mock-server.js')
   },

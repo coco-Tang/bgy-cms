@@ -12,15 +12,15 @@
         <!-- <div class="login-title">智能茶壶系统后台服务平台</div> -->
         <div class="login-content">
           <el-form ref="loginForm" :model="loginForm" class="login-form">
-            <el-form-item :class="{'form-item-error': showUsernameError}" prop="username">
+            <el-form-item :class="{'form-item-error': showaccountError}" prop="account">
               <span class="svg-container">
                 <i class="iconfont">&#xe6cb;</i>
               </span>
               <el-input
-                ref="username"
-                v-model="loginForm.username"
+                ref="account"
+                v-model="loginForm.account"
                 placeholder="用户名"
-                name="username"
+                name="account"
                 type="text"
                 tabindex="1"
                 auto-complete="on"
@@ -75,7 +75,7 @@ export default {
   data() {
     return {
       loginForm: {
-        username: "",
+        account: "",
         password: "",
         rememberPassword: true
       },
@@ -87,7 +87,7 @@ export default {
     };
   },
   computed: {
-    showUsernameError() {
+    showaccountError() {
       return this.errorCode === 1 || this.errorCode === 3;
     },
     showPasswordError() {
@@ -105,8 +105,8 @@ export default {
     
   },
   mounted() {
-    // if (getCookie('username') && getCookie('password')) {
-    //   this.loginForm.username = getCookie('username');
+    // if (getCookie('account') && getCookie('password')) {
+    //   this.loginForm.account = getCookie('account');
     //   this.loginForm.password = getCookie('password');
     // }
   },
@@ -137,10 +137,10 @@ export default {
       });
     },
     loginSubmit() {
-      // let username = this.loginForm.username;
+      // let account = this.loginForm.account;
       // let password = new MD5().update(this.loginForm.password).digest('hex');
-      let { username, password } = this.loginForm;
-      if (username === "") {
+      let { account, password } = this.loginForm;
+      if (account === "") {
         this.errorMsg = "用户名/邮箱不能为空";
         this.errorCode = 1;
         return;
@@ -159,7 +159,7 @@ export default {
 
       this.loading = true;
       this.$store
-        .dispatch("user/login", this.loginForm)
+        .dispatch("user/login", { account, password })
         .then(() => {
           console.log('login.vue登录成功')
           this.$router.push({ path: this.redirect || "/" });

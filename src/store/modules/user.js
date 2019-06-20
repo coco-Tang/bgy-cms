@@ -39,14 +39,15 @@ const actions = {
     return new Promise((resolve, reject) => {
       login(userInfo).then(response => {
         // console.log(response)
-        if (response.success) {
-          const { token, role, username, cnname } = response.data;
+        if (response.code === 1) {
+          Message.success(response.message);
+          const { account } = response.data;
           // console.log('actions', response.data);
-          commit('SET_TOKEN', token);
-          commit('SET_ROLES', role.map(item => item.name));
-          commit('SET_NAME', cnname);
-          commit('SET_ACCOUNT', username);
-          setToken(token);
+          // commit('SET_TOKEN', token);
+          // commit('SET_ROLES', role.map(item => item.name));
+          // commit('SET_NAME', cnname);
+          commit('SET_ACCOUNT', account);
+          // setToken(token);
           resolve();
         } else {
           Message.error(response.message);

@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
+import VuexPersistense from 'vuex-persistedstate'
 import getters from './getters'
 
 Vue.use(Vuex)
@@ -17,9 +18,22 @@ const modules = modulesFiles.keys().reduce((modules, modulePath) => {
   return modules
 }, {})
 
+const vuexLocal = new VuexPersistense({
+  storage: localStorage,
+  reducer: val => {
+    return {
+      //引入app模板，对象里面可配置需要持久化的status
+      user: {
+        account: val.user.account,
+      }
+    }
+  }
+})
+
 const store = new Vuex.Store({
   modules,
-  getters
+  getters,
+  plugins: [vuexLocal]
 })
 
 export default store

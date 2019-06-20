@@ -3,9 +3,9 @@ import qs from 'qs'
 
 export function login(data) {
   return request({
-    url: '/login',
-    method: 'post',
-    data: qs.stringify(data)
+    url: '/user/login',
+    method: 'get',
+    params: data
   })
 }
 
